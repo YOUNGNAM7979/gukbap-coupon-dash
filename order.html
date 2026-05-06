@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>열정국밥 관악구 봉천점 포장 주문</title>
+  <meta name="description" content="열정국밥 관악구 봉천점 포장 주문 전용 메뉴판입니다. 결제는 매장 방문 시 진행됩니다.">
+  <link rel="stylesheet" href="./order.css">
+</head>
+<body>
+  <main class="order-app">
+    <section class="menu-area">
+      <header class="order-header">
+        <p>열정국밥 관악구 봉천점</p>
+        <h1>포장 주문</h1>
+        <a href="tel:028782304">전화 주문 02-878-2304</a>
+      </header>
+
+      <div class="notice-bar">
+        결제는 매장 방문 시 진행됩니다. 표시 가격은 배달가를 제외한 픽업 가격입니다.
+      </div>
+
+      <nav id="categoryTabs" class="category-tabs" aria-label="메뉴 카테고리"></nav>
+      <div id="menuList" class="menu-list" aria-live="polite"></div>
+    </section>
+
+    <aside class="cart-panel">
+      <h2>주문서</h2>
+      <div id="cartItems" class="cart-items"></div>
+
+      <label class="field">
+        <span>포장 예정 시간</span>
+        <select id="pickupTime">
+          <option value="15분 후">15분 후</option>
+          <option value="20분 후">20분 후</option>
+          <option value="30분 후">30분 후</option>
+          <option value="40분 후">40분 후</option>
+          <option value="직접 문의">직접 문의</option>
+        </select>
+      </label>
+
+      <label class="field">
+        <span>쿠폰</span>
+        <select id="couponSelect">
+          <option value="0">쿠폰 없음</option>
+          <option value="1000">게임 쿠폰 1,000원</option>
+          <option value="2000">게임 쿠폰 2,000원</option>
+          <option value="3000">게임 쿠폰 3,000원</option>
+        </select>
+      </label>
+
+      <div class="customer-grid">
+        <label class="field">
+          <span>이름</span>
+          <input id="customerName" type="text" placeholder="예: 홍길동">
+        </label>
+        <label class="field">
+          <span>연락처</span>
+          <input id="customerPhone" type="tel" placeholder="예: 010-0000-0000">
+        </label>
+      </div>
+
+      <label class="field">
+        <span>요청사항</span>
+        <textarea id="requestText" rows="3" placeholder="예: 깍두기 많이 주세요"></textarea>
+      </label>
+
+      <div class="total-box">
+        <div><span>메뉴 합계</span><strong id="subtotal">0원</strong></div>
+        <div><span>쿠폰 할인</span><strong id="discount">0원</strong></div>
+        <div class="grand"><span>방문 결제 예정</span><strong id="grandTotal">0원</strong></div>
+      </div>
+
+      <button id="makeOrderBtn" class="primary-action">주문 접수하기</button>
+      <a class="call-action" href="tel:028782304">가게로 전화하기</a>
+
+      <div id="orderSummary" class="order-summary" hidden>
+        <h3>주문 접수 내용</h3>
+        <pre id="summaryText"></pre>
+        <button id="copyBtn" class="copy-action">주문 내용 복사</button>
+      </div>
+
+      <p class="fine-print">
+        쿠폰은 포장 주문 전용입니다. 1천/2천원 쿠폰은 15,000원 이상, 3천원 쿠폰은 20,000원 이상 주문 시 사용 가능합니다.
+      </p>
+    </aside>
+  </main>
+
+  <script src="./order.js"></script>
+</body>
+</html>

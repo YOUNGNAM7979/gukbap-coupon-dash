@@ -1,0 +1,888 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>국밥열정 쿠폰 대시</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #101014;
+      --panel: #191b20;
+      --text: #f7f3ea;
+      --muted: #a9a59c;
+      --hot: #ff5e73;
+      --coin: #ffd166;
+      --cool: #34d1bf;
+      --line: rgba(255, 255, 255, .11);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 20% 12%, rgba(255, 94, 115, .16), transparent 30%),
+        radial-gradient(circle at 78% 20%, rgba(52, 209, 191, .14), transparent 28%),
+        linear-gradient(135deg, #0e0e13, #17181d 55%, #111318);
+      color: var(--text);
+      font-family: "Segoe UI", Pretendard, system-ui, sans-serif;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      width: min(100vw, 980px);
+      height: 100vh;
+      margin: 0 auto;
+      padding: 18px;
+      gap: 12px;
+    }
+
+    header,
+    footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 42px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(22px, 3.8vw, 42px);
+      line-height: 1;
+      letter-spacing: 0;
+    }
+
+    .stats {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 88px;
+      height: 36px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(25, 27, 32, .78);
+      font-weight: 700;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .game-wrap {
+      position: relative;
+      min-height: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #111218;
+      box-shadow: 0 18px 55px rgba(0, 0, 0, .32);
+      touch-action: none;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      background: rgba(10, 10, 14, .56);
+      backdrop-filter: blur(8px);
+    }
+
+    .overlay[hidden] {
+      display: none;
+    }
+
+    .dialog {
+      width: min(460px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+      background: rgba(25, 27, 32, .92);
+      text-align: center;
+    }
+
+    .dialog h2 {
+      margin: 0 0 12px;
+      font-size: clamp(26px, 6vw, 52px);
+      letter-spacing: 0;
+    }
+
+    .dialog p {
+      margin: 8px 0 20px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    button {
+      width: min(260px, 100%);
+      height: 46px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--cool);
+      color: #07110f;
+      font-weight: 900;
+      font-size: 16px;
+      cursor: pointer;
+      box-shadow: 0 10px 28px rgba(52, 209, 191, .24);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .secondary {
+      background: rgba(255, 255, 255, .1);
+      color: var(--text);
+      box-shadow: none;
+      border: 1px solid var(--line);
+    }
+
+    .order-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background:
+        radial-gradient(circle at 26% 16%, rgba(255, 209, 102, .18), transparent 30%),
+        linear-gradient(135deg, rgba(14, 14, 19, .97), rgba(23, 24, 29, .98));
+    }
+
+    .order-screen[hidden] {
+      display: none;
+    }
+
+    .order-panel {
+      width: min(520px, 100%);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 22px;
+      background: rgba(25, 27, 32, .94);
+      box-shadow: 0 18px 55px rgba(0, 0, 0, .34);
+    }
+
+    .order-panel h2 {
+      margin: 0 0 8px;
+      font-size: clamp(26px, 5vw, 44px);
+      letter-spacing: 0;
+    }
+
+    .order-note {
+      margin: 0 0 18px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .order-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      min-height: 42px;
+      border-top: 1px solid var(--line);
+      font-weight: 700;
+    }
+
+    .order-line:last-of-type {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .price {
+      white-space: nowrap;
+      color: #ffe7a3;
+    }
+
+    .featured-menu {
+      margin: 14px 0;
+      padding: 16px;
+      border: 1px solid rgba(255, 209, 102, .35);
+      border-radius: 8px;
+      background: rgba(255, 209, 102, .08);
+    }
+
+    .featured-menu strong {
+      display: block;
+      margin-bottom: 6px;
+      font-size: clamp(22px, 5vw, 34px);
+      line-height: 1.12;
+      letter-spacing: 0;
+      color: #ffe7a3;
+    }
+
+    .featured-menu span {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .coupon-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin: 16px 0;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .05);
+      font-weight: 800;
+    }
+
+    .coupon-toggle input {
+      width: 22px;
+      height: 22px;
+      accent-color: var(--coin);
+    }
+
+    .order-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    footer {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .bar {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      width: min(380px, 100%);
+      height: 34px;
+    }
+
+    .key {
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .05);
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    @media (max-width: 620px) {
+      .app {
+        padding: 10px;
+        gap: 8px;
+      }
+
+      header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .stats {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .pill {
+        flex: 1;
+        min-width: 0;
+        padding: 0 8px;
+      }
+
+      .button-row,
+      .order-actions {
+        grid-template-columns: 1fr;
+      }
+
+      footer {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>국밥열정 쿠폰 대시</h1>
+      <div class="stats" aria-live="polite">
+        <div class="pill">점수 <span id="score">0</span></div>
+        <div class="pill">최고 <span id="best">0</span></div>
+        <div class="pill">콤보 <span id="combo">x1</span></div>
+        <div class="pill">쿠폰 <span id="coupon">0장</span></div>
+      </div>
+    </header>
+
+    <section class="game-wrap" id="gameWrap">
+      <canvas id="game" aria-label="피하고 모으는 액션 게임"></canvas>
+      <div class="overlay" id="overlay">
+        <div class="dialog">
+          <h2 id="title">준비</h2>
+          <p id="message">국밥열정 충전 해장국 쿠폰을 모으고 스트레스는 피하세요. 쿠폰을 많이 모을수록 할인 혜택이 커집니다.</p>
+          <div class="button-row">
+            <button id="startBtn">시작</button>
+            <button class="secondary" id="orderBtn" hidden>주문으로</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="bar" aria-hidden="true">
+        <div class="key">←</div>
+        <div class="key">Space</div>
+        <div class="key">→</div>
+      </div>
+    </footer>
+  </main>
+
+  <section class="order-screen" id="orderScreen" hidden>
+    <div class="order-panel">
+      <h2>국밥열정 주문</h2>
+      <p class="order-note" id="orderNote">게임에서 얻은 쿠폰은 주문당 1장만 사용할 수 있습니다. 실제 주문 화면에서 메뉴는 다시 선택할 수 있어요.</p>
+      <div class="featured-menu">
+        <strong>열정충전 해장국</strong>
+        <span>오늘의 추천 메뉴입니다. 주문 화면으로 들어가면 다른 메뉴도 선택할 수 있습니다.</span>
+      </div>
+      <label class="coupon-toggle">
+        <span id="couponRule">쿠폰 1장 적용</span>
+        <input id="couponUse" type="checkbox" checked>
+      </label>
+      <div class="order-line">
+        <span>이번 주문 쿠폰 사용</span>
+        <span class="price" id="discountPrice">-1,000원</span>
+      </div>
+      <div class="order-actions">
+        <button id="placeOrderBtn">주문 화면으로</button>
+        <button class="secondary" id="backGameBtn">한 판 더</button>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const canvas = document.querySelector("#game");
+    const ctx = canvas.getContext("2d");
+    const wrap = document.querySelector("#gameWrap");
+    const overlay = document.querySelector("#overlay");
+    const startBtn = document.querySelector("#startBtn");
+    const orderBtn = document.querySelector("#orderBtn");
+    const orderScreen = document.querySelector("#orderScreen");
+    const orderNote = document.querySelector("#orderNote");
+    const couponRule = document.querySelector("#couponRule");
+    const couponUse = document.querySelector("#couponUse");
+    const discountPrice = document.querySelector("#discountPrice");
+    const placeOrderBtn = document.querySelector("#placeOrderBtn");
+    const backGameBtn = document.querySelector("#backGameBtn");
+    const scoreEl = document.querySelector("#score");
+    const bestEl = document.querySelector("#best");
+    const comboEl = document.querySelector("#combo");
+    const couponEl = document.querySelector("#coupon");
+    const titleEl = document.querySelector("#title");
+    const messageEl = document.querySelector("#message");
+
+    const MENU_REWARDS = [
+      "국밥열정 충전 해장국",
+      "충전 해장국 할인쿠폰",
+      "오늘의 해장 충전권",
+      "국밥열정 든든쿠폰"
+    ];
+    const STRESS_LABELS = ["스트레스", "피로", "걱정", "월요병", "허기", "번아웃", "야근"];
+    const ORDER_URL = "./order.html";
+    const COUPON_DISCOUNT = 1000;
+    const ORDER_READY_COUPONS = 3;
+
+    const state = {
+      running: false,
+      over: false,
+      score: 0,
+      best: Number(localStorage.getItem("gukbap-dash-best") || 0),
+      combo: 1,
+      coupons: 0,
+      t: 0,
+      last: 0,
+      spawnWall: 0,
+      spawnCoin: 0,
+      shake: 0,
+      keys: new Set(),
+      walls: [],
+      coins: [],
+      sparks: [],
+      popups: [],
+      orderReady: false,
+      player: { x: 0, y: 0, r: 15, vx: 0 }
+    };
+
+    bestEl.textContent = state.best;
+
+    function resize() {
+      const rect = wrap.getBoundingClientRect();
+      const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      state.player.y = rect.height - 58;
+      state.player.x = Math.min(Math.max(state.player.x || rect.width / 2, 28), rect.width - 28);
+    }
+
+    function reset() {
+      const rect = wrap.getBoundingClientRect();
+      state.running = true;
+      state.over = false;
+      state.score = 0;
+      state.combo = 1;
+      state.coupons = 0;
+      state.t = 0;
+      state.spawnWall = 0;
+      state.spawnCoin = 0;
+      state.shake = 0;
+      state.walls = [];
+      state.coins = [];
+      state.sparks = [];
+      state.popups = [];
+      state.orderReady = false;
+      state.player = { x: rect.width / 2, y: rect.height - 58, r: 15, vx: 0 };
+      orderScreen.hidden = true;
+      orderBtn.hidden = true;
+      overlay.hidden = true;
+      updateStats();
+    }
+
+    function updateStats() {
+      scoreEl.textContent = Math.floor(state.score);
+      bestEl.textContent = state.best;
+      comboEl.textContent = `x${state.combo}`;
+      couponEl.textContent = `${state.coupons}장`;
+    }
+
+    function updateOrder() {
+      const hasCoupon = state.coupons > 0;
+      const applied = hasCoupon && couponUse.checked;
+      const remaining = Math.max(0, state.coupons - (applied ? 1 : 0));
+      couponUse.disabled = !hasCoupon;
+      couponUse.checked = applied;
+      couponRule.textContent = hasCoupon
+        ? `쿠폰 1장 적용 가능, 보유 ${state.coupons}장`
+        : "사용 가능한 쿠폰 없음";
+      orderNote.textContent = applied
+        ? `이번 주문에는 1장만 적용됩니다. 남은 쿠폰 ${remaining}장은 다음 주문에 써요. 실제 주문 화면에서 메뉴는 다시 선택할 수 있습니다.`
+        : "가게도 버텨야 하니 쿠폰은 주문당 1장만 사용할 수 있습니다. 실제 주문 화면에서 메뉴는 다시 선택할 수 있습니다.";
+      discountPrice.textContent = applied ? `-${COUPON_DISCOUNT.toLocaleString("ko-KR")}원` : "-0원";
+    }
+
+    function showOrder() {
+      if (!state.orderReady || state.coupons <= 0) {
+        return;
+      }
+      overlay.hidden = true;
+      orderScreen.hidden = false;
+      couponUse.checked = state.coupons > 0;
+      updateOrder();
+    }
+
+    function rand(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function spawnWall() {
+      const rect = wrap.getBoundingClientRect();
+      const w = rand(34, 96);
+      const label = STRESS_LABELS[Math.floor(rand(0, STRESS_LABELS.length))];
+      state.walls.push({
+        x: rand(8, rect.width - w - 8),
+        y: -34,
+        w,
+        h: rand(24, 46),
+        vy: rand(180, 250) + state.t * 5,
+        color: Math.random() > .35 ? "#ff5e73" : "#ff8a5b",
+        label
+      });
+    }
+
+    function spawnCoin() {
+      const rect = wrap.getBoundingClientRect();
+      const label = MENU_REWARDS[Math.floor(rand(0, MENU_REWARDS.length))];
+      state.coins.push({
+        x: rand(28, rect.width - 28),
+        y: -24,
+        r: rand(8, 12),
+        vy: rand(150, 220) + state.t * 3,
+        phase: rand(0, Math.PI * 2),
+        label
+      });
+    }
+
+    function addPopup(x, y, text, color) {
+      state.popups.push({
+        x,
+        y,
+        text,
+        color,
+        age: 0,
+        life: .9
+      });
+    }
+
+    function addSparks(x, y, color, amount) {
+      for (let i = 0; i < amount; i++) {
+        state.sparks.push({
+          x,
+          y,
+          vx: rand(-150, 150),
+          vy: rand(-190, 90),
+          life: rand(.25, .55),
+          age: 0,
+          color
+        });
+      }
+    }
+
+    function hitCircleRect(circle, rect) {
+      const nx = Math.max(rect.x, Math.min(circle.x, rect.x + rect.w));
+      const ny = Math.max(rect.y, Math.min(circle.y, rect.y + rect.h));
+      const dx = circle.x - nx;
+      const dy = circle.y - ny;
+      return dx * dx + dy * dy < circle.r * circle.r;
+    }
+
+    function endGame() {
+      state.running = false;
+      state.over = true;
+      state.shake = 16;
+      addSparks(state.player.x, state.player.y, "#ff5e73", 34);
+      if (state.score > state.best) {
+        state.best = Math.floor(state.score);
+        localStorage.setItem("gukbap-dash-best", state.best);
+      }
+      updateStats();
+      state.orderReady = state.coupons >= ORDER_READY_COUPONS;
+      titleEl.textContent = "오늘의 충전 완료";
+      messageEl.textContent = state.orderReady
+        ? `점수 ${Math.floor(state.score)}점, 쿠폰 ${state.coupons}장 획득. 이제 국밥열정 충전 해장국 주문으로 넘어갑니다. 쿠폰은 주문당 1장만 적용됩니다.`
+        : `점수 ${Math.floor(state.score)}점, 쿠폰 ${state.coupons}장 획득. 쿠폰 ${ORDER_READY_COUPONS}장부터 주문으로 이어집니다.`;
+      startBtn.textContent = "다시 시작";
+      orderBtn.hidden = !state.orderReady;
+      setTimeout(() => {
+        overlay.hidden = false;
+        if (state.orderReady) {
+          setTimeout(showOrder, 1300);
+        }
+      }, 420);
+    }
+
+    function drawBackground(w, h, time) {
+      ctx.fillStyle = "#111218";
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = "rgba(255,255,255,.07)";
+      ctx.lineWidth = 1;
+      const gap = 46;
+      const offset = (time * 70) % gap;
+      for (let y = -gap + offset; y < h + gap; y += gap) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+      for (let x = 0; x < w; x += gap) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, h);
+        ctx.stroke();
+      }
+    }
+
+    function drawPlayer(p) {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.shadowColor = "#34d1bf";
+      ctx.shadowBlur = 18;
+      ctx.fillStyle = "#34d1bf";
+      ctx.beginPath();
+      ctx.moveTo(0, -p.r - 6);
+      ctx.lineTo(p.r + 12, p.r + 8);
+      ctx.lineTo(0, p.r);
+      ctx.lineTo(-p.r - 12, p.r + 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "#07110f";
+      ctx.fillRect(-4, -1, 8, 12);
+      ctx.restore();
+    }
+
+    function draw() {
+      const rect = wrap.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      const sx = state.shake ? rand(-state.shake, state.shake) : 0;
+      const sy = state.shake ? rand(-state.shake, state.shake) : 0;
+
+      ctx.save();
+      ctx.translate(sx, sy);
+      drawBackground(w, h, state.t);
+
+      for (const coin of state.coins) {
+        const pulse = Math.sin(state.t * 8 + coin.phase) * 2;
+        ctx.save();
+        ctx.translate(coin.x, coin.y);
+        ctx.shadowColor = "#ffd166";
+        ctx.shadowBlur = 15;
+        ctx.fillStyle = "#f8b92e";
+        ctx.beginPath();
+        ctx.arc(0, 0, coin.r + pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "#ffe7a3";
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "#7a4a00";
+        ctx.font = `${Math.max(12, coin.r * 1.45)}px Segoe UI, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("₩", 0, 1);
+        ctx.strokeStyle = "rgba(255,255,255,.5)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 0, Math.max(coin.r - 4, 4), 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+
+      for (const wall of state.walls) {
+        ctx.save();
+        ctx.translate(wall.x + wall.w / 2, wall.y + wall.h / 2);
+        const scale = Math.min(wall.w / 82, wall.h / 42);
+        ctx.shadowColor = wall.color;
+        ctx.shadowBlur = 14;
+        ctx.fillStyle = wall.color;
+        ctx.beginPath();
+        ctx.moveTo(0, 25 * scale);
+        ctx.lineTo(10 * scale, 4 * scale);
+        ctx.lineTo(36 * scale, -3 * scale);
+        ctx.lineTo(11 * scale, -13 * scale);
+        ctx.lineTo(5 * scale, -27 * scale);
+        ctx.lineTo(0, -31 * scale);
+        ctx.lineTo(-5 * scale, -27 * scale);
+        ctx.lineTo(-11 * scale, -13 * scale);
+        ctx.lineTo(-36 * scale, -3 * scale);
+        ctx.lineTo(-10 * scale, 4 * scale);
+        ctx.closePath();
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "rgba(20, 8, 12, .45)";
+        ctx.beginPath();
+        ctx.ellipse(0, -9 * scale, 8 * scale, 12 * scale, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,.18)";
+        ctx.beginPath();
+        ctx.moveTo(0, 21 * scale);
+        ctx.lineTo(5 * scale, 7 * scale);
+        ctx.lineTo(0, 10 * scale);
+        ctx.lineTo(-5 * scale, 7 * scale);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#fff7ef";
+        ctx.font = `${Math.max(9, 12 * scale)}px Segoe UI, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(wall.label, 0, -2 * scale);
+        ctx.restore();
+      }
+
+      for (const spark of state.sparks) {
+        const alpha = 1 - spark.age / spark.life;
+        ctx.globalAlpha = Math.max(0, alpha);
+        ctx.fillStyle = spark.color;
+        ctx.fillRect(spark.x, spark.y, 4, 4);
+      }
+      ctx.globalAlpha = 1;
+
+      for (const popup of state.popups) {
+        const pct = popup.age / popup.life;
+        ctx.globalAlpha = Math.max(0, 1 - pct);
+        ctx.fillStyle = popup.color;
+        ctx.font = "800 18px Segoe UI, Pretendard, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(popup.text, popup.x, popup.y - pct * 38);
+      }
+      ctx.globalAlpha = 1;
+
+      if (!state.over) {
+        drawPlayer(state.player);
+      }
+
+      ctx.restore();
+    }
+
+    function update(dt) {
+      if (!state.running) {
+      state.sparks.forEach(s => {
+        s.age += dt;
+        s.x += s.vx * dt;
+        s.y += s.vy * dt;
+        s.vy += 420 * dt;
+      });
+      state.sparks = state.sparks.filter(s => s.age < s.life);
+      state.popups.forEach(p => {
+        p.age += dt;
+      });
+      state.popups = state.popups.filter(p => p.age < p.life);
+      state.shake = Math.max(0, state.shake - 45 * dt);
+      return;
+      }
+
+      const rect = wrap.getBoundingClientRect();
+      state.t += dt;
+      state.score += dt * 7 * state.combo;
+      state.spawnWall -= dt;
+      state.spawnCoin -= dt;
+      state.shake = Math.max(0, state.shake - 45 * dt);
+
+      if (state.spawnWall <= 0) {
+        spawnWall();
+        state.spawnWall = Math.max(.26, .72 - state.t * .014);
+      }
+
+      if (state.spawnCoin <= 0) {
+        spawnCoin();
+        state.spawnCoin = rand(.55, .95);
+      }
+
+      let dir = 0;
+      if (state.keys.has("ArrowLeft") || state.keys.has("a")) dir -= 1;
+      if (state.keys.has("ArrowRight") || state.keys.has("d")) dir += 1;
+      state.player.vx += dir * 1900 * dt;
+      state.player.vx *= Math.pow(.0009, dt);
+      state.player.x += state.player.vx * dt;
+      state.player.x = Math.max(24, Math.min(rect.width - 24, state.player.x));
+
+      for (const wall of state.walls) {
+        wall.y += wall.vy * dt;
+        if (hitCircleRect(state.player, wall)) {
+          addPopup(state.player.x, state.player.y - 20, `${wall.label} 피하지 못함`, "#ffb1bb");
+          endGame();
+          break;
+        }
+      }
+
+      for (const coin of state.coins) {
+        coin.y += coin.vy * dt;
+        const dx = coin.x - state.player.x;
+        const dy = coin.y - state.player.y;
+        if (dx * dx + dy * dy < (coin.r + state.player.r + 6) ** 2) {
+          coin.collected = true;
+          state.combo = Math.min(9, state.combo + 1);
+          state.coupons += 1;
+          state.score += 35 * state.combo;
+          addPopup(coin.x, coin.y - 12, `${coin.label} +1`, "#ffe7a3");
+          addSparks(coin.x, coin.y, "#ffd166", 14);
+        }
+      }
+
+      const missed = state.coins.some(coin => coin.y > rect.height + 40 && !coin.collected);
+      if (missed) {
+        state.combo = 1;
+      }
+
+      state.walls = state.walls.filter(wall => wall.y < rect.height + 80);
+      state.coins = state.coins.filter(coin => !coin.collected && coin.y < rect.height + 80);
+      state.sparks.forEach(s => {
+        s.age += dt;
+        s.x += s.vx * dt;
+        s.y += s.vy * dt;
+        s.vy += 420 * dt;
+      });
+      state.sparks = state.sparks.filter(s => s.age < s.life);
+      state.popups.forEach(p => {
+        p.age += dt;
+      });
+      state.popups = state.popups.filter(p => p.age < p.life);
+      updateStats();
+    }
+
+    function loop(now) {
+      const dt = Math.min(.033, (now - state.last) / 1000 || 0);
+      state.last = now;
+      update(dt);
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function moveByPointer(clientX) {
+      const rect = wrap.getBoundingClientRect();
+      const target = clientX - rect.left;
+      state.player.vx += (target - state.player.x) * .24;
+    }
+
+    window.addEventListener("resize", resize);
+    window.addEventListener("keydown", event => {
+      const key = event.key.toLowerCase();
+      if (["arrowleft", "arrowright", "a", "d", " "].includes(key)) {
+        event.preventDefault();
+      }
+      if (key === " " && !state.running) {
+        reset();
+      }
+      state.keys.add(key === "arrowleft" ? "ArrowLeft" : key === "arrowright" ? "ArrowRight" : key);
+    });
+    window.addEventListener("keyup", event => {
+      const key = event.key.toLowerCase();
+      state.keys.delete(key === "arrowleft" ? "ArrowLeft" : key === "arrowright" ? "ArrowRight" : key);
+    });
+    wrap.addEventListener("pointermove", event => {
+      if (state.running) moveByPointer(event.clientX);
+    });
+    wrap.addEventListener("pointerdown", event => {
+      wrap.setPointerCapture(event.pointerId);
+      if (!state.running) reset();
+      moveByPointer(event.clientX);
+    });
+    startBtn.addEventListener("click", reset);
+    orderBtn.addEventListener("click", showOrder);
+    couponUse.addEventListener("change", updateOrder);
+    backGameBtn.addEventListener("click", reset);
+    placeOrderBtn.addEventListener("click", () => {
+      const used = state.coupons > 0 && couponUse.checked;
+      if (used) {
+        state.coupons -= 1;
+      }
+      updateStats();
+      couponUse.checked = false;
+      updateOrder();
+      orderNote.textContent = `주문 화면으로 이동합니다. 쿠폰은 ${used ? "1장만" : "0장"} 적용했고, 메뉴는 주문 화면에서 다시 선택할 수 있습니다.`;
+      placeOrderBtn.textContent = "이동 완료";
+      placeOrderBtn.disabled = true;
+      const couponParam = used ? "?coupon=1000&source=gukbap-game" : "?source=gukbap-game";
+      window.location.href = `${ORDER_URL}${couponParam}`;
+    });
+
+    resize();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

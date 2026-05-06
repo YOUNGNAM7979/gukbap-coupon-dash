@@ -410,8 +410,12 @@
     ];
     const STRESS_LABELS = ["스트레스", "피로", "걱정", "월요병", "허기", "번아웃", "야근"];
     const ORDER_URL = "./order.html";
-    const COUPON_DISCOUNT = 1000;
-    const ORDER_READY_COUPONS = 3;
+    const COUPON_TIERS = [
+      { minCoupons: 3, value: 1000, minOrder: 10000 },
+      { minCoupons: 6, value: 2000, minOrder: 20000 },
+      { minCoupons: 9, value: 3000, minOrder: 30000 }
+    ];
+    const ORDER_READY_COUPONS = COUPON_TIERS[0].minCoupons;
 
     const state = {
       running: false,
@@ -476,23 +480,30 @@
       couponEl.textContent = `${state.coupons}장`;
     }
 
+    function earnedCoupon() {
+      return COUPON_TIERS
+        .filter(tier => state.coupons >= tier.minCoupons)
+        .at(-1) || null;
+    }
+
     function updateOrder() {
-      const hasCoupon = state.coupons > 0;
+      const coupon = earnedCoupon();
+      const hasCoupon = Boolean(coupon);
       const applied = hasCoupon && couponUse.checked;
       const remaining = Math.max(0, state.coupons - (applied ? 1 : 0));
       couponUse.disabled = !hasCoupon;
       couponUse.checked = applied;
       couponRule.textContent = hasCoupon
-        ? `쿠폰 1장 적용 가능, 보유 ${state.coupons}장`
-        : "사용 가능한 쿠폰 없음";
+        ? `${coupon.value.toLocaleString("ko-KR")}원 쿠폰 1장 적용 가능, 보유 ${state.coupons}장`
+        : `쿠폰 ${ORDER_READY_COUPONS}장부터 주문 쿠폰이 열립니다`;
       orderNote.textContent = applied
-        ? `이번 주문에는 1장만 적용됩니다. 남은 쿠폰 ${remaining}장은 다음 주문에 써요. 실제 주문 화면에서 메뉴는 다시 선택할 수 있습니다.`
+        ? `이번 주문에는 ${coupon.value.toLocaleString("ko-KR")}원 쿠폰 1장만 적용됩니다. 최소 주문금액은 ${coupon.minOrder.toLocaleString("ko-KR")}원입니다. 남은 쿠폰 ${remaining}장은 다음 주문에 써요.`
         : "가게도 버텨야 하니 쿠폰은 주문당 1장만 사용할 수 있습니다. 실제 주문 화면에서 메뉴는 다시 선택할 수 있습니다.";
-      discountPrice.textContent = applied ? `-${COUPON_DISCOUNT.toLocaleString("ko-KR")}원` : "-0원";
+      discountPrice.textContent = applied ? `-${coupon.value.toLocaleString("ko-KR")}원` : "-0원";
     }
 
     function showOrder() {
-      if (!state.orderReady || state.coupons <= 0) {
+      if (!state.orderReady || !earnedCoupon()) {
         return;
       }
       overlay.hidden = true;
@@ -576,11 +587,14 @@
         localStorage.setItem("gukbap-dash-best", state.best);
       }
       updateStats();
-      state.orderReady = state.coupons >= ORDER_READY_COUPONS;
+      const coupon = earnedCoupon();
+      state.orderReady = Boolean(coupon);
       titleEl.textContent = "오늘의 충전 완료";
-      messageEl.textContent = state.orderReady
-        ? `점수 ${Math.floor(state.score)}점, 쿠폰 ${state.coupons}장 획득. 이제 국밥열정 충전 해장국 주문으로 넘어갑니다. 쿠폰은 주문당 1장만 적용됩니다.`
-        : `점수 ${Math.floor(state.score)}점, 쿠폰 ${state.coupons}장 획득. 쿠폰 ${ORDER_READY_COUPONS}장부터 주문으로 이어집니다.`;
+      messageEl.textContent = coupon
+        ? state.coupons >= COUPON_TIERS.at(-1).minCoupons
+          ? `점수 ${Math.floor(state.score)}점, 쿠폰 ${state.coupons}장 획득. ${coupon.value.toLocaleString("ko-KR")}원 쿠폰까지 받았으니 일단 주문하고 든든하게 쉬어가요.`
+          : `점수 ${Math.floor(state.score)}점, 쿠폰 ${state.coupons}장 획득. ${coupon.value.toLocaleString("ko-KR")}원 쿠폰을 주문당 1장만 적용해서 주문 화면으로 넘어갑니다.`
+        : `점수 ${Math.floor(state.score)}점, 쿠폰 ${state.coupons}장 획득. 쿠폰 ${ORDER_READY_COUPONS}장부터 1,000원 쿠폰이 열립니다. 한 판 더 가볼까요?`;
       startBtn.textContent = "다시 시작";
       orderBtn.hidden = !state.orderReady;
       setTimeout(() => {
@@ -868,16 +882,17 @@
     backGameBtn.addEventListener("click", reset);
     placeOrderBtn.addEventListener("click", () => {
       const used = state.coupons > 0 && couponUse.checked;
+      const coupon = earnedCoupon();
       if (used) {
         state.coupons -= 1;
       }
       updateStats();
       couponUse.checked = false;
       updateOrder();
-      orderNote.textContent = `주문 화면으로 이동합니다. 쿠폰은 ${used ? "1장만" : "0장"} 적용했고, 메뉴는 주문 화면에서 다시 선택할 수 있습니다.`;
+      orderNote.textContent = `주문 화면으로 이동합니다. 쿠폰은 ${used && coupon ? `${coupon.value.toLocaleString("ko-KR")}원 1장만` : "0장"} 적용했고, 메뉴는 주문 화면에서 다시 선택할 수 있습니다.`;
       placeOrderBtn.textContent = "이동 완료";
       placeOrderBtn.disabled = true;
-      const couponParam = used ? "?coupon=1000&source=gukbap-game" : "?source=gukbap-game";
+      const couponParam = used && coupon ? `?coupon=${coupon.value}&source=gukbap-game` : "?source=gukbap-game";
       window.location.href = `${ORDER_URL}${couponParam}`;
     });
 

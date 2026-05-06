@@ -171,8 +171,9 @@ function subtotal() {
 
 function couponDiscount(total) {
   const selected = Number(couponSelect.value);
-  if (selected === 3000 && total >= 20000) return 3000;
-  if ((selected === 1000 || selected === 2000) && total >= 15000) return selected;
+  if (selected === 3000 && total >= 30000) return 3000;
+  if (selected === 2000 && total >= 20000) return 2000;
+  if (selected === 1000 && total >= 10000) return 1000;
   return 0;
 }
 
@@ -330,10 +331,14 @@ renderCategories();
 renderMenu();
 if (params.get("source") === "gukbap-game") {
   activeCategory = "열정진국";
-  if (params.get("coupon") === "1000") {
-    couponSelect.value = "1000";
+  const gameCoupon = params.get("coupon");
+  if (["1000", "2000", "3000"].includes(gameCoupon)) {
+    couponSelect.value = gameCoupon;
   }
-  requestText.value = [requestText.value.trim(), "국밥열정 쿠폰 대시 게임 쿠폰 사용"].filter(Boolean).join(" / ");
+  const gameNote = ["1000", "2000", "3000"].includes(gameCoupon)
+    ? `국밥열정 쿠폰 대시 게임 쿠폰 ${Number(gameCoupon).toLocaleString("ko-KR")}원 사용`
+    : "국밥열정 쿠폰 대시에서 주문 화면 이동";
+  requestText.value = [requestText.value.trim(), gameNote].filter(Boolean).join(" / ");
   renderCategories();
   renderMenu();
 }

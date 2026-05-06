@@ -133,13 +133,6 @@ function renderMenu() {
       </article>
     `)
     .join("");
-
-  menuList.querySelectorAll("[data-add]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const item = items[Number(button.dataset.add)];
-      addToCart(item);
-    });
-  });
 }
 
 function cartKey(item) {
@@ -315,6 +308,17 @@ categoryTabs.addEventListener("click", (event) => {
   activeCategory = button.dataset.category;
   renderCategories();
   renderMenu();
+});
+
+menuList.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-add]");
+  if (!button) return;
+  event.preventDefault();
+  const items = menuData.filter((item) => item.category === activeCategory);
+  const item = items[Number(button.dataset.add)];
+  if (item) {
+    addToCart(item);
+  }
 });
 
 couponSelect.addEventListener("change", renderCart);

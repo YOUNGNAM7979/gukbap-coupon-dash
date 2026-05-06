@@ -876,6 +876,9 @@
       if (!state.running) reset();
       moveByPointer(event.clientX);
     });
+    overlay.addEventListener("pointerdown", event => {
+      event.stopPropagation();
+    });
     startBtn.addEventListener("click", reset);
     orderBtn.addEventListener("click", showOrder);
     couponUse.addEventListener("change", updateOrder);
